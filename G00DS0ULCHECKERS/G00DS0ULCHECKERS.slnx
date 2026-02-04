@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="G00DS0ULCHECKERS.Model/G00DS0ULCHECKERS.Model.csproj" />
+  <Project Path="G00DS0ULCHECKERS.ViewModel/G00DS0ULCHECKERS.ViewModel.csproj" />
+  <Project Path="WPFUI/WPFUI.csproj" />
+</Solution>
