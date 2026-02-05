@@ -9,7 +9,7 @@ namespace G00DS0ULCHECKERS.ViewModel
         public event PropertyChangedEventHandler? PropertyChanged;
 
         public int Score { get; set; }
-        public Board CurrentBoard { get; set; }
+        public Board CurrentBoard { get; set; } = new Board();
         public PlayerColor CurrentPlayerTurn { get; set; }
         public string TurnMessage => $"{CurrentPlayerTurn}'s Turn";
 

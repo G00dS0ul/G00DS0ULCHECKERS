@@ -8,17 +8,22 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using G00DS0ULCHECKERS.ViewModel;
 
 namespace WPFUI
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
+
+        private GameSession? _gameSession;
+
         public MainWindow()
         {
             InitializeComponent();
+
+            _gameSession = new GameSession();
+
+            DataContext = _gameSession;
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public class Board
     {
-        public Piece[,] Grid { get; set; }
+        public Piece?[,] Grid { get; set; }
 
         public Board()
         {
