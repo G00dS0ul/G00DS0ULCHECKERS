@@ -1,16 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\G00DS0ULCHECKERS.Model\G00DS0ULCHECKERS.Model.csproj" />
-    <ProjectReference Include="..\G00DS0ULCHECKERS.ViewModel\G00DS0ULCHECKERS.ViewModel.csproj" />
   </ItemGroup>
 
 </Project>
