@@ -292,7 +292,68 @@ namespace G00DS0ULCHECKERS.ViewModel
                 return true;
             }
 
+            if (!HasAnyMoves(CurrentPlayerTurn))
+            {
+                var winner = (CurrentPlayerTurn == PlayerColor.Red) ? "WHITE" : "RED";
+                TurnMessage = $"{winner} WINS! (No Moves)";
+                return true;
+            }
+
             return false;
+        }
+
+        private bool HasAnyMoves(PlayerColor player)
+        {
+            foreach (var s in Squares)
+            {
+                if (s.CurrentPiece != null && s.CurrentPiece.Color == player)
+                {
+                    if (CanPieceMove(s)) return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool CanPieceMove(Square s)
+        {
+            int[] offsets = { -1, 1, -2, 2 };
+
+            foreach (var rOff in offsets)
+            {
+                foreach (var cOff in offsets)
+                {
+                    if (Math.Abs(rOff) == 1 && Math.Abs(cOff) == 1)
+                    {
+                        if (IsMoveValidMock(s, rOff, cOff, isJump: false)) return true;
+                    }
+
+                    if (Math.Abs(rOff) == 2 && Math.Abs(cOff) == 2)
+                    {
+                        if (IsMoveValidMock(s, rOff, cOff, isJump: false)) return true;
+                        {
+                            
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool IsMoveValidMock(Square from, int rOff, int cOff, bool isJump)
+        {
+            var targetRow = from.Row + rOff;
+            var targetCol = from.Column + cOff;
+
+            if (targetRow < 0 || targetRow >= 8 || targetCol < 0 || targetCol >= 8) return false;
+
+            var targetPiece = CurrentBoard.Grid[targetRow, targetCol];
+            var targetSquare = new Square(targetRow, targetCol, targetPiece);
+
+
+            if (isJump) return IsValidJumpMove(from, targetSquare);
+            return IsValidSimpleMove(from, targetSquare);
         }
 
         private bool CanCaptureAgain(Square currentPos)
