@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:WPFUI"
         xmlns:viewModels="clr-namespace:G00DS0ULCHECKERS.ViewModel;assembly=G00DS0ULCHECKERS.ViewModel" d:DataContext="{d:DesignInstance Type=viewModels:GameSession}"
         mc:Ignorable="d"
-        Title="G00dS0ul Checkers Engine" Height="650" Width="650">
+        Title="G00dS0ul Checkers Engine" Height="650" Width="650" Background="#1E1E1E">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -32,12 +32,22 @@
                 <DataTemplate>
                     <Border BorderBrush="#333"
                             BorderThickness="0.5">
+                        <Border.InputBindings>
+                            <MouseBinding MouseAction="LeftClick"
+                                          Command="{Binding DataContext.ClickCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                          CommandParameter="{Binding}"/>
+                        </Border.InputBindings>
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="Background" Value="#E8D1B5"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding IsDark}" Value="True">
                                         <Setter Property="Background" Value="#784421"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                        <Setter Property="Background" Value="#FFD700"/>
+                                        <Setter Property="BorderThickness" Value="4"/>
+                                        <Setter Property="Background" Value="#5C4033"/>
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>

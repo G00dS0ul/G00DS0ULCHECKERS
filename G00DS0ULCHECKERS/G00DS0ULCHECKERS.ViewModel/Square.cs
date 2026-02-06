@@ -10,8 +10,9 @@ namespace G00DS0ULCHECKERS.ViewModel
         public int Row { get; set; }
         public int Column { get; set; }
         public Piece? CurrentPiece { get; set; }
-
+        public bool IsSelected { get; set; }
         public bool IsDark => (Row + Column) % 2 != 0;
+
 
         public Square(int row, int col, Piece? piece)
         {
