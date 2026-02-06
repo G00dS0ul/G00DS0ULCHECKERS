@@ -41,5 +41,28 @@
                 }
             }
         }
+
+        public Board Clone()
+        {
+            var newBoard = new Board();
+
+            for (var r = 0; r < 8; r++)
+            {
+                for (var c = 0; c < 8; c++)
+                {
+                    var original = Grid[r, c];
+                    if (original != null)
+                    {
+                        newBoard.Grid[r, c] = new Piece(original.Color) {IsKing = original.IsKing};
+                    }
+                    else
+                    {
+                        newBoard.Grid[r, c] = null;
+                    }
+                }
+            }
+
+            return newBoard;
+        }
     }
 }

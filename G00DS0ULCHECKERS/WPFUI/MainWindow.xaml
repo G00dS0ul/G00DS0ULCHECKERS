@@ -18,20 +18,43 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="20" Height="20" Fill="#D9381E" Stroke="Black" Margin="0,0,5,0"/>
-                    <TextBlock Text="{Binding CapturedRed}" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                <StackPanel Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,20,0">
+                    <Ellipse Width="20" Height="20"
+                             Fill="#D9381E"
+                             Stroke="Black"
+                             Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding CapturedRed}"
+                               Foreground="White"
+                               FontSize="20"
+                               FontWeight="Bold"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding TurnMessage}"
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <CheckBox Content=" vs CPU"
+                              IsChecked="{Binding IsVsComputer}"
+                              Foreground="White"
+                              FontWeight="Bold"
+                              VerticalAlignment="Center"
+                              Margin="0,0,15,0"/>
+                    
+                    <ComboBox ItemsSource="{Binding DifficultyValues}"
+                        SelectedItem="{Binding CurrentDifficulty}"
+                              Width="80"
+                              VerticalAlignment="Center"
+                              IsEditable="{Binding IsVsComputer}"/>
+                </StackPanel>
+                <TextBlock Grid.Column="2" Text="{Binding TurnMessage}"
                            Foreground="White"
                            FontSize="24"
                            FontWeight="Bold"
                            HorizontalAlignment="Center"/>
 
-                <Button Grid.Column="2"
+                <Button Grid.Column="3"
                         Content="Restart"
                         Command="{Binding RestartCommand}"
                         Padding="10.5"

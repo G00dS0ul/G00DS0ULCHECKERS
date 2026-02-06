@@ -8,14 +8,18 @@ namespace G00DS0ULCHECKERS.ViewModel
 {
     public class GameSession : INotifyPropertyChanged
     {
+        private ComputerAi _ai = new ComputerAi();
         public event PropertyChangedEventHandler? PropertyChanged;
 
         #region Properties
 
         public Board CurrentBoard { get; set; } = new Board();
         public PlayerColor CurrentPlayerTurn { get; set; }
+        public bool IsVsComputer { get; set; } = true;
         public string TurnMessage { get; private set; }
         public ObservableCollection<Square> Squares { get; set; }
+        public IEnumerable<DifficultyLevel> DifficultyValues => Enum.GetValues(typeof(DifficultyLevel)).Cast<DifficultyLevel>();
+        public DifficultyLevel CurrentDifficulty { get; set; } = DifficultyLevel.Hard;
         public Square? SelectedSquare { get; set; }
         public int CapturedRed { get; set; }
         public int CapturedWhite { get; set; }
@@ -43,6 +47,39 @@ namespace G00DS0ULCHECKERS.ViewModel
             RefreshBoard(); //Load the data into the list
         }
 
+        public bool IsValidJumpMoveForSim(Square from, Square to, Board board)
+        {
+            if (to.CurrentPiece != null) return false;
+
+            var rowDiff = to.Row - from.Row;
+            var colDiff = to.Column - from.Column;
+            if (Math.Abs(rowDiff) != 2 || Math.Abs(colDiff) != 2) return false;
+
+            var midRow = (from.Row + to.Row) / 2;
+            var midCol = (from.Column + to.Column) / 2;
+            var victim = board.Grid[midRow, midCol];
+
+            if (victim == null) return false;
+            if(victim.Color == from.CurrentPiece?.Color) return false;
+
+            if (from.CurrentPiece.IsKing) return true;
+            if(from.CurrentPiece.Color == PlayerColor.Red) return rowDiff == -2;
+            return rowDiff == 2;
+        }
+
+        public bool IsValidSimpleMoveForSim(Square from, Square to, Board board)
+        {
+            if (board.Grid[to.Row, to.Column] != null) return false;
+
+            if (Math.Abs(to.Column - from.Column) != 1) return false;
+
+            var rowDiff = to.Row - from.Row;
+            if (from.CurrentPiece.IsKing) return Math.Abs(rowDiff) == 1;
+            if (from.CurrentPiece.Color == PlayerColor.Red) return rowDiff == -1;
+            return rowDiff == 1;
+        }
+
+        #region Private Methods
         private void RefreshBoard()
         {
             Squares.Clear();
@@ -195,7 +232,7 @@ namespace G00DS0ULCHECKERS.ViewModel
             return true;
         }
 
-        private void MovePiece(Square from, Square to)
+        private async void MovePiece(Square from, Square to)
         {
             var isCapture = false;
 
@@ -254,8 +291,15 @@ namespace G00DS0ULCHECKERS.ViewModel
                 {
                     SelectedSquare = landedSquare;
                     SelectedSquare.IsSelected = true;
-                    TurnMessage = $"{CurrentPlayerTurn} can capture again!";
-                    return; // Don't switch turns, allow the player to capture again
+                    TurnMessage = $"{CurrentPlayerTurn} can capture again!"; // Don't switch turns, allow the player to capture again
+
+                    if (IsVsComputer && CurrentPlayerTurn == PlayerColor.White)
+                    {
+                        await Task.Delay(500);
+                        PlayComputerTurn();
+                    }
+
+                    return;
                 }
             }
 
@@ -265,6 +309,36 @@ namespace G00DS0ULCHECKERS.ViewModel
 
             if (SelectedSquare != null) SelectedSquare.IsSelected = false;
             SelectedSquare = null;
+
+            if (IsVsComputer && CurrentPlayerTurn == PlayerColor.White)
+            {
+                TurnMessage = "Computer is thinking...";
+                await Task.Delay(500);
+                PlayComputerTurn();
+            }
+        }
+
+        private void PlayComputerTurn()
+        {
+            var move = _ai.GetBestMove(this, CurrentDifficulty);
+
+            if (move != null)
+            {
+                var realStart = Squares.FirstOrDefault(s => s.Row == move.Value.From.Row && s.Column == move.Value.From.Column);
+                var realEnd = Squares.FirstOrDefault(s => s.Row == move.Value.To.Row && s.Column == move.Value.To.Column);
+
+                if (realStart != null && realEnd != null)
+                {
+                    SelectedSquare = realStart;
+                    realStart.IsSelected = true;
+
+                    MovePiece(realStart, realEnd);
+                }
+            }
+            else
+            {
+                TurnMessage = "Red Wins! (Computer has no moves)";
+            }
         }
 
         private bool CheckForWin()
@@ -382,6 +456,7 @@ namespace G00DS0ULCHECKERS.ViewModel
 
             return false;
         }
+        #endregion
     }
 }
 
