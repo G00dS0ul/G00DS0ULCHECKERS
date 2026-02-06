@@ -152,6 +152,8 @@ namespace G00DS0ULCHECKERS.ViewModel
 
         private void MovePiece(Square from, Square to)
         {
+            var isCapture = false;
+
             if (Math.Abs(to.Row - from.Row) == 2)
             {
                 var midRow = (from.Row + to.Row) / 2;
@@ -159,6 +161,7 @@ namespace G00DS0ULCHECKERS.ViewModel
 
                 // Kill The Enemy!!
                 CurrentBoard.Grid[midRow, midCol] = null;
+                isCapture = true;
             }
 
             var p = CurrentBoard.Grid[from.Row, from.Column];
@@ -166,20 +169,44 @@ namespace G00DS0ULCHECKERS.ViewModel
             {
                 CurrentBoard.Grid[to.Row, to.Column] = p;
                 CurrentBoard.Grid[from.Row, from.Column] = null;
+
+                if (p.Color == PlayerColor.Red && to.Row == 0 || p.Color == PlayerColor.White && to.Row == 7) p.IsKing = true;
             }
             
 
             // The Coronation Ceremony
-            if (p?.Color == PlayerColor.Red && to.Row == 0)
+            //if (p?.Color == PlayerColor.Red && to.Row == 0)
+            //{
+            //    p.IsKing = true;
+            //    System.Diagnostics.Debug.WriteLine("A Red King is Crowned!!");
+            //}
+
+            //else if (p.Color == PlayerColor.White && to.Row == 7)
+            //{
+            //    p.IsKing = true;
+            //    System.Diagnostics.Debug.WriteLine("A White king is Crown!!!");
+            //}
+
+            RefreshBoard();
+
+            // Always Check for victory after a move, because you might win by either a simple move or a jump move
+            if (CheckForWin())
             {
-                p.IsKing = true;
-                System.Diagnostics.Debug.WriteLine("A Red King is Crowned!!");
+                SelectedSquare = null;
+                return;
             }
 
-            else if (p.Color == PlayerColor.White && to.Row == 7)
+            if (isCapture)
             {
-                p.IsKing = true;
-                System.Diagnostics.Debug.WriteLine("A White king is Crown!!!");
+                var landedSquare = Squares.FirstOrDefault(s => s.Row == to.Row && s.Column == to.Column);
+
+                if (landedSquare != null && CanCaptureAgain(landedSquare))
+                {
+                    SelectedSquare = landedSquare;
+                    SelectedSquare.IsSelected = true;
+                    TurnMessage = $"{CurrentPlayerTurn} can capture again!";
+                    return; // Don't switch turns, allow the player to capture again
+                }
             }
 
             CurrentPlayerTurn = CurrentPlayerTurn == PlayerColor.Red ? PlayerColor.White : PlayerColor.Red;
@@ -188,8 +215,61 @@ namespace G00DS0ULCHECKERS.ViewModel
 
             if (SelectedSquare != null) SelectedSquare.IsSelected = false;
             SelectedSquare = null;
+        }
 
-            RefreshBoard();
+        private bool CheckForWin()
+        {
+            var redCount = 0;
+            var whiteCount = 0;
+
+            foreach (var square in Squares)
+            {
+                if (square.CurrentPiece != null)
+                {
+                    if(square.CurrentPiece.Color == PlayerColor.Red) redCount++;
+                    else whiteCount++;
+                }
+            }
+
+            if(redCount == 0)
+            {
+                TurnMessage = "White Wins!!";
+                return true;
+            }
+            else if (whiteCount == 0)
+            {
+                TurnMessage = "Red Wins!!";
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool CanCaptureAgain(Square currentPos)
+        {
+            int[] rowOffsets = [-2, 2];
+            int[] colOffsets = [-2, 2];
+
+            foreach (var rOff in rowOffsets)
+            {
+                foreach (var cOffset in colOffsets)
+                {
+                    var targetRow = currentPos.Row + rOff;
+                    var targetCol = currentPos.Column + cOffset;
+
+                    if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8)
+                    {
+                        var targetPiece = CurrentBoard.Grid[targetRow, targetCol];
+                        var targetSquare = new Square(targetRow, targetCol, targetPiece);
+                        if (targetSquare != null && IsValidJumpMove(currentPos, targetSquare))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }
