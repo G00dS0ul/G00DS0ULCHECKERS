@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Reflection.PortableExecutable;
 using System.Windows.Input;
 using G00DS0ULCHECKERS.Model;
 
@@ -9,18 +10,26 @@ namespace G00DS0ULCHECKERS.ViewModel
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
-        public int Score { get; set; }
+        #region Properties
+
         public Board CurrentBoard { get; set; } = new Board();
         public PlayerColor CurrentPlayerTurn { get; set; }
         public string TurnMessage { get; private set; }
         public ObservableCollection<Square> Squares { get; set; }
         public Square? SelectedSquare { get; set; }
+        public int CapturedRed { get; set; }
+        public int CapturedWhite { get; set; }
         public ICommand ClickCommand { get; set; }
+        public ICommand RestartCommand { get; set; }
+
+        #endregion
 
         public GameSession()
         {
             Squares = new ObservableCollection<Square>();
             ClickCommand = new RelayCommand(ExecuteClick);
+
+            RestartCommand = new RelayCommand(o => NewGame());
             NewGame();
         }
 
@@ -29,6 +38,8 @@ namespace G00DS0ULCHECKERS.ViewModel
             CurrentBoard = new Board();
             CurrentPlayerTurn = PlayerColor.Red;
             TurnMessage = "Red's Turn";
+            CapturedRed = 0;
+            CapturedWhite = 0;
             RefreshBoard(); //Load the data into the list
         }
 
@@ -64,16 +75,50 @@ namespace G00DS0ULCHECKERS.ViewModel
                 }
                 else if (SelectedSquare != null)
                 {
-                    if (IsValidSimpleMove(SelectedSquare, clickedSquare))
+                    if (IsValidJumpMove(SelectedSquare, clickedSquare))
                     {
                         MovePiece(SelectedSquare, clickedSquare);
                     }
-                    else if(IsValidJumpMove(SelectedSquare, clickedSquare))
+                    else if(IsValidSimpleMove(SelectedSquare, clickedSquare))
                     {
+                        if (AnyCaptureAvailable())
+                        {
+                            TurnMessage = "You must capture if you can!";
+                            return;
+                        }
                         MovePiece(SelectedSquare, clickedSquare);
                     }
                 }
             }
+        }
+
+        private bool AnyCaptureAvailable()
+        {
+            foreach (var s in Squares)
+            {
+                if (s.CurrentPiece != null && s.CurrentPiece.Color == CurrentPlayerTurn)
+                {
+                    int[] offset = [ -2, 2 ];
+                    foreach (var rOff in offset)
+                    {
+                        foreach (var cOff in offset)
+                        {
+                            var targetRow = s.Row + rOff;
+                            var targetCol = s.Column + cOff;
+
+                            if (targetRow >= 0 && targetRow < 8 && targetCol >= 0 && targetCol < 8)
+                            {
+                                var targetPiece = CurrentBoard.Grid[targetRow, targetCol];
+                                var targetSquare = new Square(targetRow, targetCol, targetPiece);
+
+                                if (IsValidJumpMove(s, targetSquare)) return true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         private bool IsValidSimpleMove(Square from, Square to)
@@ -162,6 +207,11 @@ namespace G00DS0ULCHECKERS.ViewModel
                 // Kill The Enemy!!
                 CurrentBoard.Grid[midRow, midCol] = null;
                 isCapture = true;
+
+                if (from.CurrentPiece?.Color == PlayerColor.Red)
+                    CapturedWhite++;
+                else
+                    CapturedRed++;
             }
 
             var p = CurrentBoard.Grid[from.Row, from.Column];
