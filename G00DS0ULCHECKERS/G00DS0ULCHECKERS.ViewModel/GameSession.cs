@@ -8,6 +8,7 @@ namespace G00DS0ULCHECKERS.ViewModel
 {
     public class GameSession : INotifyPropertyChanged
     {
+        private readonly SoundManager _audio = new SoundManager();
         private ComputerAi _ai = new ComputerAi();
         public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -244,11 +245,17 @@ namespace G00DS0ULCHECKERS.ViewModel
                 // Kill The Enemy!!
                 CurrentBoard.Grid[midRow, midCol] = null;
                 isCapture = true;
+                _audio.PlayCapture();
 
                 if (from.CurrentPiece?.Color == PlayerColor.Red)
                     CapturedWhite++;
                 else
                     CapturedRed++;
+            }
+
+            else
+            {
+                _audio.PlayMove();
             }
 
             var p = CurrentBoard.Grid[from.Row, from.Column];
@@ -350,6 +357,7 @@ namespace G00DS0ULCHECKERS.ViewModel
             {
                 TurnMessage = "Red Wins!!";
                 return true;
+                _audio.PlayWin();
             }
 
             if (!HasAnyMoves(CurrentPlayerTurn))
