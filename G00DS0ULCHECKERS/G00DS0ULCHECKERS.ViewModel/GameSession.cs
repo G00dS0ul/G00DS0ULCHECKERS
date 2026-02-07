@@ -260,20 +260,6 @@ namespace G00DS0ULCHECKERS.ViewModel
                 if (p.Color == PlayerColor.Red && to.Row == 0 || p.Color == PlayerColor.White && to.Row == 7) p.IsKing = true;
             }
             
-
-            // The Coronation Ceremony
-            //if (p?.Color == PlayerColor.Red && to.Row == 0)
-            //{
-            //    p.IsKing = true;
-            //    System.Diagnostics.Debug.WriteLine("A Red King is Crowned!!");
-            //}
-
-            //else if (p.Color == PlayerColor.White && to.Row == 7)
-            //{
-            //    p.IsKing = true;
-            //    System.Diagnostics.Debug.WriteLine("A White king is Crown!!!");
-            //}
-
             RefreshBoard();
 
             // Always Check for victory after a move, because you might win by either a simple move or a jump move

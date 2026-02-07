@@ -27,7 +27,7 @@ namespace G00DS0ULCHECKERS.ViewModel
                     return GetMinimaxMove(gameSession, 1);
 
                 case DifficultyLevel.Hard:
-                    return GetMinimaxMove(gameSession, 3);
+                    return GetMinimaxMove(gameSession, 5);
 
                 default:
                     return GetRandomMove(gameSession);
@@ -128,15 +128,40 @@ namespace G00DS0ULCHECKERS.ViewModel
         private double EvaluateBoard(Board board)
         {
             var score = 0.0;
+
             for (var r = 0; r < 8; r++)
             {
                 for (var c = 0; c < 8; c++)
                 {
                     var piece = board.Grid[r, c];
+
                     if (piece != null)
                     {
-                        var value = piece.IsKing ? 5.0 : 1.0;
-                        score += piece.Color == PlayerColor.White ? value : -value;
+                        var pieceValue = piece.IsKing ? 10.0 : 3.0;
+
+                        if (c >= 2 && c <= 4 && r >= 3 && r <= 4)
+                        {
+                            pieceValue += 0.5;
+                        }
+
+                        if (piece.Color == PlayerColor.White && !piece.IsKing)
+                        {
+                            pieceValue += r * 0.1;
+                        }
+
+                        if (piece.Color == PlayerColor.Red && !piece.IsKing)
+                        {
+                            pieceValue += (7 - r) * 0.1;
+                        }
+
+                        if (piece.Color == PlayerColor.White && r == 0) pieceValue += 1.0;
+                        if (piece.Color == PlayerColor.Red && r == 7) pieceValue += 1.0;
+
+                        if (piece.Color == PlayerColor.White) score += pieceValue;
+                        else
+                        {
+                            score -= pieceValue;
+                        }
                     }
                 }
             }
