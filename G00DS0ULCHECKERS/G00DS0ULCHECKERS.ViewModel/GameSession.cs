@@ -334,7 +334,7 @@ namespace G00DS0ULCHECKERS.ViewModel
             }
         }
 
-        private bool CheckForWin()
+        public bool CheckForWin()
         {
             var redCount = 0;
             var whiteCount = 0;
@@ -351,19 +351,21 @@ namespace G00DS0ULCHECKERS.ViewModel
             if(redCount == 0)
             {
                 TurnMessage = "White Wins!!";
+                _audio.PlayWin();
                 return true;
             }
             else if (whiteCount == 0)
             {
                 TurnMessage = "Red Wins!!";
-                return true;
                 _audio.PlayWin();
+                return true;
             }
 
             if (!HasAnyMoves(CurrentPlayerTurn))
             {
                 var winner = (CurrentPlayerTurn == PlayerColor.Red) ? "WHITE" : "RED";
                 TurnMessage = $"{winner} WINS! (No Moves)";
+                _audio.PlayWin();
                 return true;
             }
 
@@ -398,7 +400,7 @@ namespace G00DS0ULCHECKERS.ViewModel
 
                     if (Math.Abs(rOff) == 2 && Math.Abs(cOff) == 2)
                     {
-                        if (IsMoveValidMock(s, rOff, cOff, isJump: false)) return true;
+                        if (IsMoveValidMock(s, rOff, cOff, isJump: true)) return true;
                         {
                             
                         }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using G00DS0ULCHECKERS.Model;
 using D20Tek.DiceNotation;
@@ -10,11 +11,14 @@ namespace G00DS0ULCHECKERS.ViewModel
     {
         Easy,
         Medium,
-        Hard
+        Hard,
+        GodMode
     }
     public class ComputerAi
     {
         private readonly IDice _diceRoller = new Dice();
+
+        private int _positionEvaluated = 0;
 
         public (Square From, Square To)? GetBestMove(GameSession gameSession, DifficultyLevel level)
         {
@@ -28,6 +32,8 @@ namespace G00DS0ULCHECKERS.ViewModel
 
                 case DifficultyLevel.Hard:
                     return GetMinimaxMove(gameSession, 5);
+                case DifficultyLevel.GodMode:
+                    return GetMinimaxMove(gameSession, 7);
 
                 default:
                     return GetRandomMove(gameSession);
@@ -58,18 +64,24 @@ namespace G00DS0ULCHECKERS.ViewModel
             var bestScore = double.MinValue;
             (Square, Square)? bestMove = null;
 
+            _positionEvaluated = 0;
+            var timer = new Stopwatch();
+            timer.Start();
+
             var possibleMoves = GetAllValidMoves(gameSession, gameSession.CurrentBoard, PlayerColor.White);
 
-            var jumps = possibleMoves.Where(m => Math.Abs(m.To.Row - m.From.Row) == 2).ToList();
-            var movesToScan = jumps.Any() ? jumps : possibleMoves;
+            var sortedMoves = possibleMoves.OrderByDescending(m => Math.Abs(m.To.Row - m.From.Row)).ToList();
 
-            foreach (var move in movesToScan)
+            //var jumps = possibleMoves.Where(m => Math.Abs(m.To.Row - m.From.Row) == 2).ToList();
+            //var movesToScan = jumps.Any() ? jumps : possibleMoves;
+
+            foreach (var move in sortedMoves)
             {
                 var clonedBoard = gameSession.CurrentBoard.Clone();
                 SimulateMove(clonedBoard, move);
 
 
-                var score = Minimax(gameSession, clonedBoard, depth - 1, false);
+                var score = Minimax(gameSession, clonedBoard, depth - 1, false, double.MinValue, double.MaxValue);
 
                 if (score > bestScore)
                 {
@@ -78,14 +90,23 @@ namespace G00DS0ULCHECKERS.ViewModel
                 }
             }
 
+            timer.Stop();
+            Debug.WriteLine($"----------------------------------");
+            Debug.WriteLine($"AI Report:");
+            Debug.WriteLine($"Depth: {depth}");
+            Debug.WriteLine($"Future Seen: {_positionEvaluated:N0} position");
+            Debug.WriteLine($"Time Taken: {timer.ElapsedMilliseconds:N2} seconds");
+            Debug.WriteLine($"----------------------------------");
+
             return bestMove;
         }
 
-        private double Minimax(GameSession gameSession, Board board, int depth, bool isMaximizing)
+        private double Minimax(GameSession gameSession, Board board, int depth, bool isMaximizing, double alpha, double beta)
         {
+            _positionEvaluated++;
             if (depth == 0)
             {
-                return EvaluateBoard(board);
+                return EvaluateBoard(gameSession, board, PlayerColor.White);
             }
 
             var turn = isMaximizing ? PlayerColor.White : PlayerColor.Red;
@@ -106,7 +127,8 @@ namespace G00DS0ULCHECKERS.ViewModel
                 {
                     var clonedBoard = board.Clone();
                     SimulateMove(clonedBoard, move);
-                    var eval = Minimax(gameSession, clonedBoard, depth - 1, false);
+
+                    var eval = Minimax(gameSession, clonedBoard, depth - 1, false, alpha, beta);
                     maxEval = Math.Max(maxEval, eval);
                 }
                 return maxEval;
@@ -118,16 +140,32 @@ namespace G00DS0ULCHECKERS.ViewModel
                 {
                     var clonedBoard = board.Clone();
                     SimulateMove(clonedBoard, move);
-                    var eval = Minimax(gameSession, clonedBoard, depth - 1, true);
+                    var eval = Minimax(gameSession, clonedBoard, depth - 1, true, alpha, beta);
+
                     minEval = Math.Min(minEval, eval);
+                    beta = Math.Min(beta, eval);
+
+                    if (beta <= alpha) break;
                 }
                 return minEval;
             }
         }
 
-        private double EvaluateBoard(Board board)
+        private double EvaluateBoard(GameSession gameSession, Board board, PlayerColor aiColor)
         {
             var score = 0.0;
+
+            int[,] weights =
+            {
+                { 0, 4, 0, 4, 0, 4, 0, 4 },
+                { 3, 0, 3, 0, 3, 0, 3, 0 },
+                { 0, 2, 0, 2, 0, 2, 0, 2 },
+                { 2, 0, 2, 0, 2, 0, 2, 0 },
+                { 0, 2, 0, 2, 0, 2, 0, 2 },
+                { 2, 0, 2, 0, 2, 0, 2, 0 },
+                { 0, 3, 0, 3, 0, 3, 0, 3 },
+                { 4, 0, 4, 0, 4, 0, 4, 0 }
+            };
 
             for (var r = 0; r < 8; r++)
             {
@@ -139,32 +177,18 @@ namespace G00DS0ULCHECKERS.ViewModel
                     {
                         var pieceValue = piece.IsKing ? 10.0 : 3.0;
 
-                        if (c >= 2 && c <= 4 && r >= 3 && r <= 4)
-                        {
-                            pieceValue += 0.5;
-                        }
+                        var positionBonus = weights[r, c] * 0.1;
+                        pieceValue += positionBonus;
 
-                        if (piece.Color == PlayerColor.White && !piece.IsKing)
-                        {
-                            pieceValue += r * 0.1;
-                        }
-
-                        if (piece.Color == PlayerColor.Red && !piece.IsKing)
-                        {
-                            pieceValue += (7 - r) * 0.1;
-                        }
-
-                        if (piece.Color == PlayerColor.White && r == 0) pieceValue += 1.0;
-                        if (piece.Color == PlayerColor.Red && r == 7) pieceValue += 1.0;
-
-                        if (piece.Color == PlayerColor.White) score += pieceValue;
-                        else
-                        {
-                            score -= pieceValue;
-                        }
+                        if (piece.Color == PlayerColor.White) score +=pieceValue;
+                        else score -= pieceValue;
                     }
                 }
             }
+
+            var whiteMoves = GetAllValidMoves(gameSession, board, PlayerColor.White).Count;
+            var redMoves = GetAllValidMoves(gameSession, board, PlayerColor.Red).Count;
+            score += (whiteMoves - redMoves) * 0.1;
             return score;
         }
 
