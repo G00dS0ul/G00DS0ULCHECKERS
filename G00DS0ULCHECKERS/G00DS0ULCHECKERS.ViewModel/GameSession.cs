@@ -289,7 +289,7 @@ namespace G00DS0ULCHECKERS.ViewModel
                     if (IsVsComputer && CurrentPlayerTurn == PlayerColor.White)
                     {
                         await Task.Delay(500);
-                        PlayComputerTurn();
+                        PlayComputerTurn(landedSquare);
                     }
 
                     return;
@@ -311,9 +311,9 @@ namespace G00DS0ULCHECKERS.ViewModel
             }
         }
 
-        private void PlayComputerTurn()
+        private void PlayComputerTurn(Square? forcedSquare = null)
         {
-            var move = _ai.GetBestMove(this, CurrentDifficulty);
+            var move = _ai.GetBestMove(this, CurrentDifficulty, forcedSquare);
 
             if (move != null)
             {

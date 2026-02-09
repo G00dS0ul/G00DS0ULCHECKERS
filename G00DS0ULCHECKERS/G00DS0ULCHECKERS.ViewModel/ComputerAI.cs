@@ -20,20 +20,24 @@ namespace G00DS0ULCHECKERS.ViewModel
 
         private int _positionEvaluated = 0;
 
-        public (Square From, Square To)? GetBestMove(GameSession gameSession, DifficultyLevel level)
+        public (Square From, Square To)? GetBestMove(GameSession gameSession, DifficultyLevel level, Square? forceStart = null)
         {
+            if (forceStart != null)
+            {
+                return GetMinimaxMove(gameSession, 3, forceStart);
+            }
             switch (level)
             {
                 case DifficultyLevel.Easy:
                     return GetRandomMove(gameSession);
 
                 case DifficultyLevel.Medium:
-                    return GetMinimaxMove(gameSession, 1);
+                    return GetMinimaxMove(gameSession, 2, null);
 
                 case DifficultyLevel.Hard:
-                    return GetMinimaxMove(gameSession, 5);
+                    return GetMinimaxMove(gameSession, 4, null);
                 case DifficultyLevel.GodMode:
-                    return GetMinimaxMove(gameSession, 7);
+                    return GetMinimaxMove(gameSession, 6, null);
 
                 default:
                     return GetRandomMove(gameSession);
@@ -43,7 +47,7 @@ namespace G00DS0ULCHECKERS.ViewModel
         // Easy: Random move
         private (Square From, Square To)? GetRandomMove(GameSession gameSession)
         {
-            var moves = GetAllValidMoves(gameSession, gameSession.CurrentBoard, PlayerColor.White);
+            var moves = GetAllValidMoves(gameSession, gameSession.CurrentBoard, PlayerColor.White, null);
 
             if (moves.Count == 0) return null;
 
@@ -59,7 +63,7 @@ namespace G00DS0ULCHECKERS.ViewModel
         }
 
         // HARD MODE: Minimax Algorithm
-        private (Square From, Square To)? GetMinimaxMove(GameSession gameSession, int depth)
+        private (Square From, Square To)? GetMinimaxMove(GameSession gameSession, int depth, Square? forcedStart)
         {
             var bestScore = double.MinValue;
             (Square, Square)? bestMove = null;
@@ -68,12 +72,9 @@ namespace G00DS0ULCHECKERS.ViewModel
             var timer = new Stopwatch();
             timer.Start();
 
-            var possibleMoves = GetAllValidMoves(gameSession, gameSession.CurrentBoard, PlayerColor.White);
+            var possibleMoves = GetAllValidMoves(gameSession, gameSession.CurrentBoard, PlayerColor.White, forcedStart);
 
             var sortedMoves = possibleMoves.OrderByDescending(m => Math.Abs(m.To.Row - m.From.Row)).ToList();
-
-            //var jumps = possibleMoves.Where(m => Math.Abs(m.To.Row - m.From.Row) == 2).ToList();
-            //var movesToScan = jumps.Any() ? jumps : possibleMoves;
 
             foreach (var move in sortedMoves)
             {
@@ -110,7 +111,7 @@ namespace G00DS0ULCHECKERS.ViewModel
             }
 
             var turn = isMaximizing ? PlayerColor.White : PlayerColor.Red;
-            var moves = GetAllValidMoves(gameSession, board, turn);
+            var moves = GetAllValidMoves(gameSession, board, turn, null);
 
             if (moves.Count == 0)
             {
@@ -186,13 +187,13 @@ namespace G00DS0ULCHECKERS.ViewModel
                 }
             }
 
-            var whiteMoves = GetAllValidMoves(gameSession, board, PlayerColor.White).Count;
-            var redMoves = GetAllValidMoves(gameSession, board, PlayerColor.Red).Count;
+            var whiteMoves = GetAllValidMoves(gameSession, board, PlayerColor.White, null).Count;
+            var redMoves = GetAllValidMoves(gameSession, board, PlayerColor.Red, null).Count;
             score += (whiteMoves - redMoves) * 0.1;
             return score;
         }
 
-        private List<(Square From, Square To)> GetAllValidMoves(GameSession gameSession, Board board, PlayerColor color)
+        private List<(Square From, Square To)> GetAllValidMoves(GameSession gameSession, Board board, PlayerColor color, Square? forceStart)
         {
             var moves = new List<(Square, Square)>();
 
@@ -200,6 +201,8 @@ namespace G00DS0ULCHECKERS.ViewModel
             {
                 for (var c = 0; c < 8; c++)
                 {
+                    if (forceStart != null && (r != forceStart.Row || c != forceStart.Column)) continue;
+
                     var piece = board.Grid[r, c];
                     if (piece != null && piece.Color == color)
                     {
